@@ -19,16 +19,32 @@ var WEAPONS = {
   molotov: { name: 'MOLOTOVS', thrown: 'molotov', rate: 0.9 },
   // the heavy end: a scoped rifle that drops anybody it hits, and a rocket
   sniper: { name: 'SNIPER RIFLE', damage: 140, range: 280, rate: 1.25, auto: false, spread: 0, scope: true },
-  rocket: { name: 'ROCKET LAUNCHER', heavy: true, range: 200, rate: 1.5 }
+  rocket: { name: 'ROCKET LAUNCHER', heavy: true, range: 200, rate: 1.5 },
+  // Cheat weapons share the controls and audio of their weapon families.
+  hipower: { name: 'BROWNING HI-POWER', family: 'pistol', damage: 24, range: 63, rate: 0.24, auto: false, spread: 0.01 },
+  python: { name: 'COLT PYTHON', family: 'pistol', damage: 48, range: 68, rate: 0.58, auto: false, spread: 0.009 },
+  mpfive: { name: 'HK MP5', family: 'smg', damage: 12, range: 57, rate: 0.105, auto: true, spread: 0.024 },
+  macten: { name: 'MAC-10', family: 'smg', damage: 9, range: 35, rate: 0.059, auto: true, spread: 0.071 },
+  wingmaster: { name: 'REMINGTON 870', family: 'shotgun', damage: 13, range: 32, rate: 1.06, auto: false, spread: 0.058, pellets: 7 },
+  spas: { name: 'SPAS-12', family: 'shotgun', damage: 9, range: 23, rate: 0.48, auto: false, spread: 0.091, pellets: 8 },
+  avtomat: { name: 'AKM', family: 'rifle', damage: 24, range: 105, rate: 0.12, auto: true, spread: 0.041 },
+  service: { name: 'M16A1', family: 'rifle', damage: 18, range: 125, rate: 0.093, auto: true, spread: 0.019 },
+  dragunov: { name: 'DRAGUNOV SVD', family: 'sniper', damage: 92, range: 230, rate: 0.65, auto: false, spread: 0.003, scope: true },
+  scout: { name: 'M40A1', family: 'sniper', damage: 155, range: 310, rate: 1.55, auto: false, spread: 0, scope: true }
 };
 var WEAPON_ORDER = ['fist', 'bat', 'knife', 'katana', 'chainsaw', 'pistol', 'smg', 'shotgun', 'rifle', 'sniper', 'rocket', 'grenade', 'molotov'];
+WEAPON_ORDER = WEAPON_ORDER.flatMap(function (id) {
+  return [id].concat(Object.keys(WEAPONS).filter(function (w) { return WEAPONS[w].family === id; }));
+});
 // one of each of these at a time: a new one replaces whatever you had
 var WEAPON_GROUP = { bat: 'melee', knife: 'melee', katana: 'melee', chainsaw: 'melee', grenade: 'thrown', molotov: 'thrown' };
 // how long the gun stays up after a shot from the hip (player.js), and which
 // guns take both hands
 var SHOT_POSE = 0.6, TWO_HANDED = { smg: true, shotgun: true, rifle: true, sniper: true, rocket: true, chainsaw: true };
-// The number keys: 1-5 as they always were, then the hand-to-hand weapon
-// you carry, the thing you throw, the sniper rifle and the rocket launcher.
+WEAPON_ORDER.forEach(function (id) {
+  if (TWO_HANDED[WEAPONS[id].family]) TWO_HANDED[id] = true;
+});
+// Number keys select a family and cycle through its carried weapons.
 var WEAPON_KEYS = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9'];
 var WEAPON_KEY_SLOT = ['fist', 'pistol', 'smg', 'shotgun', 'rifle', 'melee', 'thrown', 'sniper', 'heavy'];
 
@@ -261,7 +277,7 @@ GAME.combat = (function () {
       return;
     }
     if (!GAME.unlimitedAmmo) inv.ammo--;
-    GAME.audio.gunshot(w);
+    GAME.audio.gunshot(wd.family === 'rifle' ? 'carbine' : wd.family || w);
     GAME.haptics.shot();
     GAME.fx.flash(m.x + Math.sin(dirYaw) * 0.6, m.y, m.z + Math.cos(dirYaw) * 0.6, 0.8);
     var pellets = wd.pellets || 1;
@@ -377,7 +393,7 @@ GAME.combat = (function () {
     // next, and the wheel (which steps on a tap and opens on a hold)
     for (var i = 0; i < WEAPON_KEYS.length; i++) {
       if (GAME.keyPressed(WEAPON_KEYS[i])) {
-        var slotted = GAME.arsenal ? GAME.arsenal.inSlot(WEAPON_KEY_SLOT[i]) : WEAPON_KEY_SLOT[i];
+        var slotted = GAME.arsenal ? GAME.arsenal.inSlot(WEAPON_KEY_SLOT[i], true) : WEAPON_KEY_SLOT[i];
         if (slotted) selectWeapon(slotted);
       }
     }
@@ -459,20 +475,20 @@ GAME.combat = (function () {
       // every burst of gunship fire also burned drive-by ammo sideways
       // (nor from a tank, whose LMB is its cannon: army.js)
       var airCar = P.car && (P.car.spec.heli || P.car.spec.plane || P.car.spec.tank);
-      var hasSMG = !airCar && P.weapons.smg && P.weapons.smg.have && P.weapons.smg.ammo > 0;
+      var driveByWeapon = !airCar && GAME.arsenal.inSlot('smg');
       var left = GAME.key('KeyQ') || T.driveByL;
       var right = GAME.key('KeyE') || T.driveByR;
       var fireBtn = (inp.lmb && !settling) || T.fire;
-      if (hasSMG && (left || right || fireBtn)) {
+      if (driveByWeapon && (left || right || fireBtn)) {
         if (cooldown <= 0) {
-          cooldown = WEAPONS.smg.rate;
+          cooldown = WEAPONS[driveByWeapon].rate;
           // left of travel = heading + pi/2 in this parametrization
           var side;
           if (left) side = 1;
           else if (right) side = -1;
           else side = U.wrapPI(GAME.cam.yaw - P.car.heading) > 0 ? 1 : -1;
           var yaw = P.car.heading + side * Math.PI / 2 + (Math.random() - 0.5) * 0.15;
-          fireGun('smg', yaw, true);
+          fireGun(driveByWeapon, yaw, true);
         }
       }
       // (a tank's trigger is its cannon's, read after this: army.js)
@@ -586,6 +602,7 @@ GAME.combat = (function () {
     GAME.hud.setWeapon(wd.name, P.currentWeapon === 'fist' || wd.melee ? ''
       : GAME.unlimitedAmmo ? '∞'
       : (inv ? inv.ammo : 0), GAME.arsenal ? GAME.arsenal.icon(P.currentWeapon) : '');
+    if (GAME.arsenal) GAME.arsenal.remember(P.currentWeapon);
     dressProp(P.currentWeapon);
   }
 
@@ -593,7 +610,17 @@ GAME.combat = (function () {
   var PROPS = {
     bat: [0.8, 0.6, 2.4, 0xc89858], knife: [0.4, 0.25, 0.8, 0xd8dce8], katana: [0.3, 0.22, 3.0, 0xe8ecf4],
     chainsaw: [2.2, 2.0, 2.4, 0xff8a2a], grenade: [1.4, 1.4, 0.45, 0x3a5a2a], molotov: [1, 1.6, 0.45, 0x3a7a4a],
-    sniper: [0.8, 0.9, 3.2, 0x2a2a34], rocket: [1.8, 1.6, 3.2, 0x5a6a3a]
+    sniper: [0.8, 0.9, 3.2, 0x2a2a34], rocket: [1.8, 1.6, 3.2, 0x5a6a3a],
+    hipower: [0.9, 0.9, 1.2, 0x424859],
+    python: [1.1, 1.15, 1.45, 0x9cabb7],
+    mpfive: [1.0, 1.0, 1.9, 0x2f3942],
+    macten: [1.25, 1.05, 1.5, 0x3c383e],
+    wingmaster: [1.05, 0.9, 2.85, 0x735039],
+    spas: [1.25, 1.15, 2.65, 0x454353],
+    avtomat: [1.15, 1.1, 2.7, 0x6f4a36],
+    service: [0.9, 1.0, 2.85, 0x303844],
+    dragunov: [0.9, 1.05, 3.15, 0x634939],
+    scout: [0.85, 0.95, 3.4, 0x4d533b]
   };
   function dressProp(w) {
     var m = GAME.player.weaponMesh;

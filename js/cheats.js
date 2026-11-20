@@ -378,6 +378,31 @@ GAME.cheats = (function () {
     { code: 'ONSPEED', g: 'sky', icon: '⏩', name: 'Fast game', what: 'Everything half as fast again.', pad: 'LEFT RIGHT UP A RB LEFT UP A', on: function () { return GAME.gameSpeed === 1.5; } },
     { code: 'BOOOOOORING', g: 'sky', icon: '🐢', name: 'Slow motion', what: 'Everything at half speed.', pad: 'RIGHT RB RB LB RIGHT UP LEFT RIGHT', on: function () { return GAME.gameSpeed === 0.5; } }
   ];
+  var extraWeapons = [
+    { id: 'hipower', ammo: 96, code: 'HIPOWER', what: 'Quick, steady sidearm.', pad: 'UP RB LEFT A RIGHT LB B UP' },
+    { id: 'python', ammo: 48, code: 'PYTHON', what: 'Hard-hitting revolver with a slower follow-up.', pad: 'UP RB LEFT A RIGHT LB B RIGHT' },
+    { id: 'mpfive', ammo: 180, code: 'MPFIVE', what: 'Steady automatic SMG. Works in drive-bys.', pad: 'UP RB LEFT A RIGHT LB UP B' },
+    { id: 'macten', ammo: 240, code: 'MACTEN', what: 'Fast, wide-spreading compact SMG. Works in drive-bys.', pad: 'UP RB LEFT A RIGHT LB UP RIGHT' },
+    { id: 'wingmaster', ammo: 42, code: 'WINGMASTER', what: 'Pump shotgun with a tight pellet spread.', pad: 'UP RB LEFT A RIGHT LB RIGHT B' },
+    { id: 'spas', ammo: 48, code: 'SPAS', what: 'Quick follow-up shots with a wide pellet spread.', pad: 'UP RB LEFT A RIGHT B LB UP' },
+    { id: 'avtomat', ammo: 150, code: 'AVTOMAT', what: 'Hard-hitting automatic rifle with a wider spread.', pad: 'UP RB LEFT A RIGHT B LB RIGHT' },
+    { id: 'service', ammo: 180, code: 'SERVICERIFLE', what: 'Steadier automatic rifle with longer in-game reach.', pad: 'UP RB LEFT A RIGHT B UP LB' },
+    { id: 'dragunov', ammo: 36, code: 'DRAGUNOV', what: 'Scoped rifle with quicker follow-up shots.', pad: 'UP RB LEFT A RIGHT B UP RIGHT' },
+    { id: 'scout', ammo: 24, code: 'SCOUTSNIPER', what: 'Long-range scoped rifle with slower follow-up shots.', pad: 'UP RB LEFT A RIGHT B RIGHT LB' }
+  ];
+  var extraCards = extraWeapons.map(function (w) {
+    var name = WEAPONS[w.id].name;
+    CODES[w.code] = function () { GAME.combat.giveWeapon(w.id, w.ammo); return name; };
+    return { code: w.code, g: 'arms', icon: '🎯', name: name, what: w.what, pad: w.pad };
+  });
+  CODES.NEONARMORY = function () {
+    arm(extraWeapons.map(function (w) { return [w.id, w.ammo]; }));
+    return 'Neon Armory unlocked';
+  };
+  extraCards.unshift({ code: 'NEONARMORY', g: 'arms', icon: '🎯', name: 'Neon Armory',
+    what: 'All ten extra weapons, with ammo for each.', pad: 'UP RB LEFT A RIGHT B RIGHT UP' });
+  // makeList groups cards by category, preserving order within each group.
+  CATALOG = CATALOG.concat(extraCards);
   var PAD_GLYPH = { A: 'Ⓐ', B: 'Ⓑ', LB: 'LB', RB: 'RB', UP: '↑', LEFT: '←', RIGHT: '→' };
   function padText(combo) { return combo.split(' ').map(function (t) { return PAD_GLYPH[t]; }).join(' '); }
 

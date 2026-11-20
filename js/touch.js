@@ -469,7 +469,7 @@ GAME.touch = (function () {
       // its slot is free in every aircraft, so the button stays
       show(btns.radio, true);
       show(btns.horn, !air);
-      var hasSMG = !air && P.weapons.smg && P.weapons.smg.have && P.weapons.smg.ammo > 0;
+      var hasSMG = !air && !!GAME.arsenal.inSlot('smg');
       // (in a tank the same FIRE is the cannon: army.js)
       show(btns.driveby, hasSMG || !!(P.car && P.car.spec.tank));
       // JOB starts a shift and, during one, ends it (J does both on a

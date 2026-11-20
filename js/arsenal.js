@@ -4,7 +4,7 @@
 // Every icon is a little SVG drawn here, in the HUD's neon — nothing is
 // loaded. The wheel is the weapon slots laid out in a ring: fists, a melee
 // weapon, something to throw, then the guns from pistol up to the rocket
-// launcher, one weapon a slot (pick up a katana and the bat goes).
+// launcher. Guns of the same family share a slot; the last one used is shown.
 // Hold the wheel key — Z, D-pad down, or WPN on a touchscreen — and the world
 // slows while you point at one; a quick tap still steps to the next weapon.
 GAME.arsenal = (function () {
@@ -28,7 +28,17 @@ GAME.arsenal = (function () {
     shotgun: '<rect x="18" y="24" width="42" height="6"/><rect x="26" y="31" width="20" height="5"/><path d="M4 25h16v11L8 44H3z"/>',
     rifle: '<rect x="20" y="25" width="40" height="5"/><path d="M4 26h20v9l-6 3v8h-6v-7H3z"/><rect x="26" y="30" width="7" height="12"/>',
     sniper: '<rect x="20" y="28" width="42" height="4"/><path d="M4 28h20v8l-6 3v9h-6v-8H3z"/><rect x="18" y="19" width="18" height="6" rx="2"/><rect x="26" y="32" width="5" height="10"/>',
-    rocket: '<rect x="6" y="25" width="46" height="11" rx="2"/><path d="M52 23l9 7.5-9 7.5z"/><rect x="18" y="36" width="6" height="12"/><rect x="32" y="36" width="5" height="8"/>'
+    rocket: '<rect x="6" y="25" width="46" height="11" rx="2"/><path d="M52 23l9 7.5-9 7.5z"/><rect x="18" y="36" width="6" height="12"/><rect x="32" y="36" width="5" height="8"/>',
+    hipower: '<path d="M7 22h46v9H28l-5 20H12l4-20H7zM47 21v-4h4v4"/>',
+    python: '<path d="M9 24h49v7H31l-8 20H12l5-16-8-4zM18 20h16v16H18zM34 20h22v4"/>',
+    mpfive: '<path d="M5 22h48v5h7v5H30l-5 17h-7l4-17H5zM36 32h7l5 15-7 2zM10 19h13v3"/>',
+    macten: '<path d="M10 20h39v5h8v6h-8v4H27v18H16V35h-6zM23 16h14v4"/>',
+    wingmaster: '<path d="M4 28h15v-4h42v5H45v6H22l-14 9H4zM33 29h12v7H33z"/>',
+    spas: '<path d="M5 24h54v6H48v6H23l-4 14h-8l4-14H5zM5 24l4-11h13v7H10zM29 36h18v5H29z"/>',
+    avtomat: '<path d="M3 25h16v-4h33v4h9v5H47v7H25l-7 12h-7l3-15H3zM31 36h8q-1 10 6 13l-4 7q-13-4-10-20z"/>',
+    service: '<path d="M3 26h17v-5h6l4-7h13l5 7h5v5h8v4H49l-4 7H26l-5 11h-8l3-13H3zM33 37h8v12h-8zM33 19h8"/>',
+    dragunov: '<path d="M3 28h17v-4h31v4h11v4H50l-5 6H25l-8 9H3zM7 34h9l-4 5H7zM24 17h19v5H24zM34 38h8v10h-8z"/>',
+    scout: '<path d="M3 28h19v-4h28v4h12v4H48l-4 5H25l-10 8H3zM20 15h24v6H20zM25 21v3m14-3v3"/>'
   };
   function icon(w) {
     var wd = WEAPONS[w];
@@ -282,7 +292,7 @@ GAME.arsenal = (function () {
   var scopeOn = false, baseFov = 62, scopePitch = 0;
   function scoped() {
     var P = GAME.player;
-    return !!(GAME.combat && GAME.combat.aiming && P.currentWeapon === 'sniper' && !P.inCar && P.state === 'alive');
+    return !!(GAME.combat && GAME.combat.aiming && WEAPONS[P.currentWeapon].scope && !P.inCar && P.state === 'alive');
   }
   // player.js asks this first every tick; true means the camera is done
   function scopeCam(mdx, mdy) {
@@ -319,9 +329,25 @@ GAME.arsenal = (function () {
     { id: 'sniper', list: ['sniper'] },
     { id: 'heavy', list: ['rocket'] }
   ];
+  SLOTS.forEach(function (slot) {
+    slot.list = slot.list.concat(WEAPON_ORDER.filter(function (w) { return WEAPONS[w].family === slot.id; }));
+  });
+  var lastUsed = {};
+  function remember(w) {
+    SLOTS.forEach(function (slot) {
+      if (slot.list.indexOf(w) >= 0) lastUsed[slot.id] = w;
+    });
+  }
   function owned(w) { var v = GAME.player.weapons[w]; return !!(v && v.have && (w === 'fist' || WEAPONS[w].melee || v.ammo > 0)); }
-  function inSlot(slot) {
-    for (var i = 0; i < slot.list.length; i++) if (owned(slot.list[i])) return slot.list[i];
+  function inSlot(slot, advance) {
+    var current = GAME.player.currentWeapon, previous = lastUsed[slot.id];
+    var currentIndex = slot.list.indexOf(current);
+    var start = owned(previous) ? slot.list.indexOf(previous) : 0;
+    if (advance && currentIndex >= 0 && owned(current)) start = currentIndex + 1;
+    for (var i = 0; i < slot.list.length; i++) {
+      var w = slot.list[(start + i) % slot.list.length];
+      if (owned(w)) return w;
+    }
     return null;
   }
   var wheelOpen = false, wheelSel = -1, wx = 0, wy = 0, holdT = 0, held = false, built = false;
@@ -439,6 +465,10 @@ GAME.arsenal = (function () {
     // headless: a Molotov broken here
     testLight: function (x, z) { light(x, GAME.city.groundY(x, z), z); },
     SLOTS: SLOTS,
-    inSlot: function (id) { for (var i = 0; i < SLOTS.length; i++) if (SLOTS[i].id === id) return inSlot(SLOTS[i]); return null; }
+    remember: remember,
+    inSlot: function (id, advance) {
+      var slot = SLOTS.find(function (s) { return s.id === id; });
+      return slot ? inSlot(slot, advance) : null;
+    }
   };
 })();

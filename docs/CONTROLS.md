@@ -13,7 +13,7 @@ Every action, on all three: keyboard and mouse, a controller (standard layout �
 | Aim (lock-on) | RMB (hold) · `Tab` (toggle) | LT | AIM (toggle, with a gun drawn) |
 | Fire · punch | LMB | RT | FIRE |
 | Switch lock target | `Q` / `E` · wheel · a flick of the camera | LB / RB · a flick of the camera | a flick of the camera |
-| Weapon · the weapon wheel | `1`–`9`, mouse wheel · hold `Z` (tap: next) | D-pad ↓ (tap: next, hold: wheel) | WPN (tap: next, hold: wheel) |
+| Weapon · the weapon wheel | `1`–`9` (repeat a number to cycle its slot), mouse wheel · hold `Z` (tap: next) | D-pad ↓ (tap: next, hold: wheel) | WPN (tap: next, hold: wheel) |
 | Get in · jack a car · climb into a boat | `F` | Y | ENTER (in reach) |
 
 **Cars, bikes and boats** (the jet ski too)
@@ -88,3 +88,22 @@ A plane rolls down the runway on throttle; past rotation speed (about 60 m of ru
 🎮 **Controllers** work as soon as one is plugged in and a button is pressed. Whichever you last touched — the pad or the keyboard and mouse — is what the prompts, the hint bar and the help name.
 
 📱 **On phones and tablets** touch controls appear automatically: a floating stick under the left thumb, a context-sensitive action cluster under the right — buttons appear only when they apply — with the radar, PAUSE, the camera, the 🕹 cheats, 📟 Lola (while her tips are on) and ⛶ (while windowed) along the top. Starting the game enters fullscreen and asks for landscape (on an iPhone, where Safari has no fullscreen for pages, add it to the home screen instead — it runs full screen from there); if the browser ever refuses, ⛶ says so. **IMPORT SAVE** on a phone opens a page of its own with no city loaded, so the file picker can't get the game's tab reclaimed by the phone mid-import. **Left-handed?** SETTINGS → CONTROLS: LEFT on the pause screen mirrors the whole cluster — stick to the right thumb, buttons to the left, and the camera drag swaps sides to match — and it is remembered.
+
+## Neon Armory cheats
+
+Open **Cheats → Weapons** and choose **Neon Armory** (`NEONARMORY`) to get all ten weapons at once, or choose a single weapon. Each cheat grants ammo and can be used again.
+
+| Weapon | Cheat | Weapon slot |
+|---|---|---|
+| BROWNING HI-POWER | `HIPOWER` | 2 · Pistol |
+| COLT PYTHON | `PYTHON` | 2 · Pistol |
+| HK MP5 | `MPFIVE` | 3 · SMG |
+| MAC-10 | `MACTEN` | 3 · SMG |
+| REMINGTON 870 | `WINGMASTER` | 4 · Shotgun |
+| SPAS-12 | `SPAS` | 4 · Shotgun |
+| AKM | `AVTOMAT` | 5 · Rifle |
+| M16A1 | `SERVICERIFLE` | 5 · Rifle |
+| DRAGUNOV SVD | `DRAGUNOV` | 8 · Sniper |
+| M40A1 | `SCOUTSNIPER` | 8 · Sniper |
+
+The weapon wheel shows the last usable weapon you selected in each slot. Tap the weapon wheel control to cycle through all carried weapons on keyboard, controller, or touch.
